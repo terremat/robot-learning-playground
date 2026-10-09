@@ -62,6 +62,9 @@ def rollout(policy, start, goal, max_steps=100, goal_tolerance=1e-3):
     positions = [position.copy()]
 
     for _ in range(max_steps):
+        if reached_goal(position, goal, goal_tolerance):
+            break
+
         observation = make_observation(position, goal)
         action = policy(position, goal)
 
@@ -70,9 +73,6 @@ def rollout(policy, start, goal, max_steps=100, goal_tolerance=1e-3):
 
         position = step(position, action)
         positions.append(position.copy())
-
-        if np.linalg.norm(position - goal) < goal_tolerance:
-            break
 
     return {
         "observations": np.asarray(observations),
