@@ -36,7 +36,9 @@ transformers = ">=5.19.0,<6"
 
 [tool.pixi.environments]
 default = ["cpu"]
-cuda = ["cuda"]
+
+[tool.pixi.environments.cuda]
+features = ["cuda"]
 
 # CPU / Apple MPS
 [tool.pixi.feature.cpu]
@@ -56,3 +58,6 @@ torchvision = "*"
 
 [tool.pixi.feature.cuda.pypi-dependencies]
 hf-libero = ">=0.1.4,<0.2"
+
+[dependency-groups]
+cuda = ["num2words>=0.5.14,<0.6"]
