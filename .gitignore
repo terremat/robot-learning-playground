@@ -226,3 +226,4 @@ __marimo__/
 # Output folder
 outputs/
 data/
+checkpoints/
