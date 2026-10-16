@@ -35,8 +35,11 @@ lerobot-dataset = ">=0.6.1,<0.7"
 transformers = ">=5.19.0,<6"
 mujoco = "<3.9.0"
 
-[tool.pixi.environments]
-default = ["cpu"]
+[tool.pixi.environments.default]
+features = ["cpu"]
+
+[tool.pixi.environments.default.dependencies]
+rerun-sdk = ">=0.38.1,<0.39"
 
 [tool.pixi.environments.cuda]
 features = ["cuda"]
