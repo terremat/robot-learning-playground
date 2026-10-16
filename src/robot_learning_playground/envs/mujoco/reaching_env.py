@@ -10,7 +10,7 @@ MODEL_PATH = ROOT / "assets/franka_emika_panda/scene.xml"
 
 
 class ReachingEnv:
-    def __init__(self):
+    def __init__(self, target_scale=1.0):
         self.model = mujoco.MjModel.from_xml_path(str(MODEL_PATH))
         self.data = mujoco.MjData(self.model)
 
@@ -37,6 +37,8 @@ class ReachingEnv:
         self.q_ref = np.zeros(7)
         self.step_count = 0
 
+        self.target_scale = target_scale
+
     def reset(self, seed=None):
         if seed is not None:
             self.rng = np.random.default_rng(seed)
@@ -57,7 +59,7 @@ class ReachingEnv:
             high=[0.08, 0.10, 0.08],
         )
 
-        self.target = x_home + offset
+        self.target = x_home + self.target_scale * offset
 
         return self._get_obs(), self._get_info()
 

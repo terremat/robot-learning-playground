@@ -9,20 +9,26 @@ The output dataset can be inspect using the LeRobot dataset viewer:
     --episode-index 0
 """
 
+import argparse
 from pathlib import Path
 
 import numpy as np
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 
-INPUT_PATH = Path("data/reaching_expert.npz")
-OUTPUT_PATH = Path("data/lerobot/reaching_expert")
-
-REPO_ID = "local/reaching_expert"
-FPS = 100
-
-
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default="data/reaching_expert.npz")
+    parser.add_argument("--output", default="data/lerobot/reaching_expert")
+    parser.add_argument("--repo-id", default="local/reaching_expert")
+    parser.add_argument("--fps", type=int, default=100)
+    args = parser.parse_args()
+
+    INPUT_PATH = Path(args.input)
+    OUTPUT_PATH = Path(args.output)
+    REPO_ID = args.repo_id
+    FPS = args.fps
+
     if OUTPUT_PATH.exists():
         raise FileExistsError(
             f"{OUTPUT_PATH} already exists. "

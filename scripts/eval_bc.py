@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from robot_learning_playground.envs.mujoco.reaching_env import ReachingEnv
 from robot_learning_playground.policies.reaching_mlp import ReachingMLP
+from robot_learning_playground.policies.reaching_expert import ReachingExpert
 
 
 def draw_target(viewer, target):
@@ -33,13 +34,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=100)
     parser.add_argument("--render", action="store_true")
-    parser.add_argument(
-        "--checkpoint",
-        default="checkpoints/reaching_bc.pt",
-    )
+    parser.add_argument("--target-scale", type=float, default=1.0)
+    parser.add_argument("--policy", choices=["expert", "bc"], default="bc")
+    parser.add_argument("--checkpoint", default="checkpoints/reaching_bc.pt")
+    parser.add_argument("--plot-actions", action="store_true")
     args = parser.parse_args()
 
-    env = ReachingEnv()
+    env = ReachingEnv(target_scale=args.target_scale)
 
     checkpoint = torch.load(
         args.checkpoint,
@@ -54,11 +55,11 @@ def main():
     policy.load_state_dict(checkpoint["model_state_dict"])
     policy.eval()
 
+    expert = ReachingExpert()
+
     successes = 0
     distances = []
     steps_to_finish = []
-
-
 
     viewer = (
         mujoco.viewer.launch_passive(env.model, env.data)
@@ -80,10 +81,14 @@ def main():
                 time.sleep(0.5)
 
             for step in range(env.max_steps):
+
                 # Policy inference
-                with torch.inference_mode():
-                    obs_tensor = torch.from_numpy(obs).unsqueeze(0)
-                    action = policy(obs_tensor).squeeze(0).numpy()
+                if args.policy == "expert":
+                    action = expert.predict(obs)
+                else:
+                    with torch.inference_mode():
+                        obs_tensor = torch.from_numpy(obs).unsqueeze(0)
+                        action = policy(obs_tensor).squeeze(0).numpy()
 
                 obs, reward, terminated, truncated, info = env.step(action)
                 actions.append(action)
@@ -109,8 +114,8 @@ def main():
                 f"Success: {info['is_success']}"
             )
 
-            if not args.render:
-                os.makedirs("outputs", exist_ok=True)
+            os.makedirs(f"outputs/{args.policy}_{args.target_scale}", exist_ok=True)
+            if not args.render and args.plot_actions:
                 plt.figure(figsize=(8, 4))
                 plt.subplot(1, 2, 1)
                 plt.plot(actions)
@@ -123,7 +128,7 @@ def main():
                 plt.xlabel("Distance (m)")
                 plt.ylabel("Frequency")
                 plt.tight_layout()
-                plt.savefig(f"outputs/eval_episode_{episode:03d}.png")
+                plt.savefig(f"outputs/{args.policy}_{args.target_scale}/eval_episode_{episode:03d}.png")
 
     finally:
         if viewer is not None:
@@ -137,6 +142,14 @@ def main():
         print(f"Success rate: {successes / n:.1%}")
         print(f"Mean final distance: {np.mean(distances):.4f} m")
         print(f"Mean episode steps: {np.mean(steps_to_finish):.1f}")
+
+    with open(f"outputs/{args.policy}_{args.target_scale}/eval_summary.txt", "w") as f:
+        f.write("===== BC EVALUATION =====\n")
+        f.write(f"Episodes evaluated: {n}\n")
+        if n:
+            f.write(f"Success rate: {successes / n:.1%}\n")
+            f.write(f"Mean final distance: {np.mean(distances):.4f} m\n")
+            f.write(f"Mean episode steps: {np.mean(steps_to_finish):.1f}\n")
 
 
 if __name__ == "__main__":
