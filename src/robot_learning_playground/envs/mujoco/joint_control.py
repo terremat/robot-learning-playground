@@ -93,8 +93,16 @@ def main():
             # Synchronize with real time for visualization
             elapsed = time.time() - step_start
 
+            print("q_ref:", data.ctrl[:7])
+            print("q_actual:", data.qpos[:7])
+            print("error:", data.ctrl[:7] - data.qpos[:7])
+            print("qfrc_bias:", data.qfrc_bias[:7])
+            print("qfrc_actuator:", data.qfrc_actuator[:7])
+
             if elapsed < dt:
                 time.sleep(dt - elapsed)
+
+            
 
 
 if __name__ == "__main__":
