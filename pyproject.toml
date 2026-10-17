@@ -65,3 +65,4 @@ hf-libero = ">=0.1.4,<0.2"
 
 [dependency-groups]
 cuda = ["num2words>=0.5.14,<0.6"]
+default = ["robosuite==1.4.0"]
