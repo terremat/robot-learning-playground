@@ -67,6 +67,15 @@ def main():
     joint_positions = []
     joint_commands = []
 
+
+    print("TCP position:")
+    print(data.site_xpos[0])
+
+    print("TCP rotation matrix:")
+    print(data.site_xmat[0].reshape(3, 3))
+
+    R_initial = data.site_xmat[controller.tcp_id].reshape(3, 3).copy()
+
     # Start the viewer
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
@@ -74,7 +83,7 @@ def main():
 
         while viewer.is_running():
 
-            error = controller.control_step(pre_grasp_pos, control_dt=control_dt)
+            error = controller.control_step(pre_grasp_pos, R_initial, control_dt=control_dt)
 
             for _ in range(control_steps):
                 mujoco.mj_step(model, data)
@@ -84,7 +93,7 @@ def main():
                 print(
                     f"t={data.time:.2f}s | "
                     f"TCP={np.round(tcp_pos, 3)} | "
-                    f"error={error:.4f}m"
+                    f"error={np.linalg.norm(error[:3]):.4f}m"
                 )
 
             # Log data
@@ -98,7 +107,19 @@ def main():
             viewer.sync()
             time.sleep(control_dt)
             step_count += 1
-    
+
+    R_final = data.site_xmat[controller.tcp_id].reshape(3, 3).copy()
+
+    print("Initial TCP Z:", R_initial[:, 2])
+    print("Final TCP Z:", R_final[:, 2])
+
+    R_error = R_initial.T @ R_final
+    angle = np.arccos(
+        np.clip((np.trace(R_error) - 1) / 2, -1.0, 1.0)
+    )
+
+    print("Orientation change:", np.degrees(angle), "deg")
+
     times = np.array(times)
     tcp_positions = np.array(tcp_positions)
     joint_positions = np.array(joint_positions)
