@@ -1,0 +1,98 @@
+<mujoco model="panda_pick_place">
+  
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <default>
+    <default class="cube">
+      <geom type="box" size="0.022 0.022 0.022" mass="0.08" friction="1 0.005 0.0001"/>            
+    </default>
+    <default class="target">
+      <geom type="box" size="0.035 0.035 0.0005" contype="0" conaffinity="0"/>            
+    </default>
+  </default>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
+      markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+    <material name="table_mat" rgba="0.65 0.68 0.72 1"/>
+    <material name="red_mat"   rgba="0.9 0.15 0.15 1"/>
+    <material name="green_mat" rgba="0.15 0.8 0.25 1"/>
+    <material name="blue_mat"  rgba="0.15 0.35 0.9 1"/>
+    <model name="panda" file="../franka_emika_panda/panda.xml"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- Robot -->
+    <body name="robot_mount" pos="0 0 0">
+      <attach model="panda" body="link0" prefix="panda_"/>
+    </body>
+
+    <!-- Table -->
+    <body name="table" pos="0.55 0 0.075">
+      <geom name="table_top"
+            type="box"
+            size="0.4 0.6 0.025"
+            material="table_mat"
+            mass="20"/>
+      <geom name="table_leg1" type="box"
+            pos="-0.34 -0.54 -0.05"
+            size="0.025 0.025 0.025"
+            material="table_mat"/>
+      <geom name="table_leg2" type="box"
+            pos="0.34 -0.54 -0.05"
+            size="0.025 0.025 0.025"
+            material="table_mat"/>
+      <geom name="table_leg3" type="box"
+            pos="-0.34 0.54 -0.05"
+            size="0.025 0.025 0.025"
+            material="table_mat"/>
+      <geom name="table_leg4" type="box"
+            pos="0.34 0.54 -0.05"
+            size="0.025 0.025 0.025"
+            material="table_mat"/>
+    </body>
+
+    <!-- Objects -->
+    <body name="cube_red" pos="0.45 -0.20 0.122">
+      <freejoint/>
+      <geom name="cube_red_geom" class="cube" material="red_mat"/>
+    </body>
+    <body name="cube_green" pos="0.55 0 0.122">
+      <freejoint/>
+      <geom name="cube_green_geom" class="cube" material="green_mat"/>
+    </body>
+    <body name="cube_blue" pos="0.45 0.20 0.122">
+      <freejoint/>
+      <geom name="cube_blue_geom" class="cube" material="blue_mat"/>
+    </body>
+
+    <!-- Targets -->
+    <body name="target_red" pos="0.75 -0.20 0.1005">
+      <geom name="target_red_geom" class="target" material="red_mat"/>
+    </body>
+    <body name="target_green" pos="0.75 0 0.1005">
+      <geom name="target_green_geom" class="target" material="green_mat"/>
+    </body>
+    <body name="target_blue" pos="0.75 0.20 0.1005">
+      <geom name="target_blue_geom" class="target" material="blue_mat"/>
+    </body>
+
+    <!-- Sensors -->
+    <camera name="overview"
+        pos="1.4 -1.2 1.7"
+        xyaxes="0.65 0.76 0 -0.43 0.37 0.82"
+        fovy="45"/>
+
+  </worldbody>
+</mujoco>
