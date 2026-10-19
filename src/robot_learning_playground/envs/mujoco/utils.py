@@ -40,7 +40,8 @@ def print_actuators(model):
     print("\n=== ACTUATORS ===")
     for i in range(model.nu):
         name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i)
-        print(f"{i:2d}  {name}")
+        ctrl_range = model.actuator_ctrlrange[i]
+        print(f"{i:2d}  {name} | ctrl_range: {ctrl_range[0]:.3f} to {ctrl_range[1]:.3f}")
 
 def print_keyframes(model):
     print("\n=== KEYFRAMES ===")

@@ -117,7 +117,10 @@ def main():
     step_elapsed = 0.0
     position_tolerance = 0.005
     rotation_tolerance = 0.05
-    
+
+    print(f"Gripper actuator ID: {gripper_id}")
+    print(model.actuator_ctrlrange[gripper_id])
+
     # Start the viewer
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
