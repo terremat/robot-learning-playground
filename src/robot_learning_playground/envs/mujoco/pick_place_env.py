@@ -3,15 +3,14 @@ from pathlib import Path
 import mujoco
 import numpy as np
 
-from robot_learning_playground.envs.mujoco.cartesian_controller import (
-    CartesianController,
-)
+from robot_learning_playground.common.tasks import PickPlaceTask
+from robot_learning_playground.envs.mujoco.cartesian_controller import CartesianController
 
 ROOT = Path(__file__).resolve().parents[4]
 SCENE_PATH = ROOT / "assets/pick_place/scene.xml"
 
 class PickPlaceEnv:
-    def __init__(self, scene_path: Path = SCENE_PATH, control_steps: int = 5):
+    def __init__(self, scene_path: Path = SCENE_PATH, task: PickPlaceTask = None, control_steps: int = 5):
         self.model = mujoco.MjModel.from_xml_path(str(scene_path))
         self.data = mujoco.MjData(self.model)
 
@@ -34,13 +33,21 @@ class PickPlaceEnv:
         self.gripper_id = self.model.actuator("panda_actuator8").id
         self.tcp_id = self.model.site("panda_tcp").id
 
-        self.reset()
+        self.reset(task)
 
-    def reset(self):
+    def reset(self, task: PickPlaceTask, seed: int = None, randomize: bool = False):
         mujoco.mj_resetDataKeyframe(self.model, self.data, 0) # Home position
-        mujoco.mj_forward(self.model, self.data)
 
+        # Randomize object positions
+        if randomize:
+            rng = np.random.default_rng(seed)
+            for object_name in self.object_names:
+                self._randomize_object_position(object_name, rng)
+
+        mujoco.mj_forward(self.model, self.data)
         self.controller.reset()
+
+        self.task = task
 
         return self.get_observation()
 
@@ -68,8 +75,38 @@ class PickPlaceEnv:
 
         observation = self.get_observation()
 
+        success = self.task.is_success(observation)
+
+        reward = float(success)
+        terminated = bool(success)
+        truncated = False
+
         info = {
+            "is_success": success,
             "cartesian_error": error.copy(),
         }
 
-        return observation, info
+        return observation, reward, terminated, truncated, info
+
+    def _randomize_object_position(
+        self,
+        object_name: str,
+        rng: np.random.Generator,
+        xy_range: float = 0.10,
+    ):
+        body_id = self.model.body(object_name).id
+
+        joint_id = self.model.body_jntadr[body_id]
+
+        if self.model.jnt_type[joint_id] != mujoco.mjtJoint.mjJNT_FREE:
+            raise ValueError(f"{object_name} has no free joint")
+
+        qpos_addr = self.model.jnt_qposadr[joint_id]
+
+        offset_xy = rng.uniform(
+            low=-xy_range,
+            high=xy_range,
+            size=2,
+        )
+
+        self.data.qpos[qpos_addr:qpos_addr + 2] += offset_xy

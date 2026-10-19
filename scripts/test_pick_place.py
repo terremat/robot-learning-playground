@@ -13,6 +13,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run the pick and place expert policy in the Mujoco environment.")
     parser.add_argument("--object", type=str, default="cube_red", help="Name of the object to pick.")
     parser.add_argument("--target", type=str, default="target_blue", help="Name of the target location to place the object.")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for environment reset.")
+    parser.add_argument("--randomize", action="store_true", help="Randomize the environment at each reset.")
     return parser.parse_args()
 
 def main():
@@ -24,7 +26,7 @@ def main():
     task = PickPlaceTask(object_name=args.object, target_name=args.target)
     print(f"Task: Pick {task.object_name} and place it on {task.target_name}")
 
-    observation = env.reset()
+    observation = env.reset(task=task, seed=args.seed, randomize=args.randomize)
     expert.reset(observation, task)
 
     with mujoco.viewer.launch_passive(env.model, env.data) as viewer:
@@ -36,7 +38,7 @@ def main():
                 print("Expert episode completed.")
                 break
 
-            observation, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action)
 
             error = info["cartesian_error"]
 
