@@ -55,6 +55,12 @@ def print_sites(model):
         name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_SITE, i)
         print(f"{i:2d}  {name}")
 
+def print_sensors(model):
+    print("\n=== SENSORS ===")
+    for i in range(model.nsensor):
+        name = model.sensor(i).name
+        print(f"{i:2d}  {name}")
+
 
 ################################
 ## Accessors
